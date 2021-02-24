@@ -29,7 +29,7 @@ const LanguageService = {
       .where({ language_id })
   },
 
-  getNextWord(db, id) {
+  getNextWord(db, language_id) {
     return db
       .from('word')
       .select(
@@ -40,7 +40,8 @@ const LanguageService = {
         'correct_count',
         'incorrect_count',
       )
-      .where({ id })
+      .where({ language_id })
+      .first()
   },
 
   getTotalCorrect(db, language_id) {

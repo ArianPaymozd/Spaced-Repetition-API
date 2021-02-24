@@ -45,18 +45,23 @@ languageRouter
   })
 
 languageRouter
-  .get('/head', jsonBodyParser, async (req, res, next) => {
-    const { language, wordId } = req.body
+  .get('/head', async (req, res, next) => {
     try {
       const correctTotal = await LanguageService.getTotalCorrect(
         req.app.get('db'),
-        language.id
+        req.language.id
       )
       const word = await LanguageService.getNextWord(
         req.app.get('db'),
-        wordId
+        req.language.id
       )
-      res.json({word, correctTotal: correctTotal[0]}).end()
+      const response = {
+        nextWord: word.original,
+        totalScore: parseInt(correctTotal[0].sum),
+        wordCorrectCount: word.correct_count,
+        wordIncorrectCount: word.incorrect_count,
+      }
+      res.json(response).end()
       next()
     } catch (error) {
       next(error)
