@@ -49,7 +49,19 @@ const LanguageService = {
       .from('word')
       .sum('correct_count')
       .where({ language_id })
-  }
+  },
+
+	async insertNewLinkedList(db, list) {
+    let currNode = list.head
+		while (currNode.next !== null) {
+			await db('word').where('id', '=', currNode.value.id).update(currNode.value);
+      currNode = currNode.next
+		}
+    if (currNode.next == null) {
+      await db('word').where('id', '=', currNode.value.id).update(currNode.value);
+    }
+		return;
+	},
 }
 
 module.exports = LanguageService
