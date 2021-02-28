@@ -5,7 +5,6 @@ const LinkedList = require('../LinkedList')
 
 const languageRouter = express.Router()
 const jsonBodyParser = express.json()
-const List = new LinkedList()
 
 languageRouter
   .use(requireAuth)
@@ -69,58 +68,91 @@ languageRouter
     }
   })
 
-languageRouter
+  languageRouter
   .post('/guess', jsonBodyParser, async (req, res, next) => {
-    const words = await LanguageService.getLanguageWords(
+    try {
+      const { guess } = req.body
+
+      if (!guess) {
+        return res.status(400).send({
+          error: `Missing 'guess' in request body`
+        })
+      }
+
+      const List = new LinkedList()
+
+      await LanguageService.makeLinkedlist(
         req.app.get('db'),
-        req.language.id
-    )
-    words.reverse().forEach(word => {
-      List.insertFirst(word)
-    })
-    const { guess } = req.body
-    const { value } = List.head
-    const head = List.head
-    if (guess === value.translation) {
-      value.memory_value = value.memory_value * 2
-      value.correct_count++
-      const total = await LanguageService.getTotalCorrect(
-        req.app.get('db'),
-        req.language.id
+        req.language.id,
+        List,
+        req.language.head
       )
-      res.json({
-        answer: value.translation,
-        isCorrect: true,
-        nextWord: head.next.value.original,
-        totalScore: parseInt(total[0].sum) + 1,
-        wordCorrectCount: value.correct_count,
-        wordIncorrectCount: value.incorrect_count
-      })
-      List.insertAt(value, value.memory_value + 1)
-      List.head = List.head.next
-    } else {
-      value.memory_value = 1
-      value.incorrect_count++
-      const total = await LanguageService.getTotalCorrect(
-        req.app.get('db'),
-        req.language.id
-      )
-      res.json({
-        answer: value.translation,
+
+      const language = req.language
+
+      let response = {
+        answer: List.head.value.translation,
+        nextWord: List.head.next.value.original,
+        totalScore: language.total_score,
+        wordCorrectCount: List.head.next.value.correct_count,
+        wordIncorrectCount: List.head.next.value.incorrect_count,
         isCorrect: false,
-        nextWord: head.next.value.original,
-        totalScore: parseInt(total[0].sum),
-        wordCorrectCount: value.correct_count,
-        wordIncorrectCount: value.incorrect_count
-      })
-      List.insertAfter(value, head.next.value)
-      List.head = List.head.next
+      }
+
+      if (guess == List.head.value.translation) {
+        language.total_score += 1
+        response.totalScore += 1
+        List.head.value.correct_count += 1
+        List.head.value.memory_value *= 2
+        response = { ...response, isCorrect: true }
+      } else {
+        List.head.value.incorrect_count += 1
+        List.head.value.memory_value = 1
+        response = { ...response, isCorrect: false }
+      }
+
+      let memVal = List.head.value.memory_value
+
+      store = List.head
+
+      while (store.next !== null && memVal > 0) {
+        let translation = store.value.translation
+        let original = store.value.original
+        let correct_count = store.value.correct_count
+        let incorrect_count = store.value.incorrect_count
+        let memory_value = store.value.memory_value
+
+        store.value.translation = store.next.value.translation
+        store.value.original = store.next.value.original
+        store.value.correct_count = store.next.value.correct_count
+        store.value.incorrect_count = store.next.value.incorrect_count
+        store.value.memory_value = store.next.value.memory_value
+
+        store.next.value.translation = translation
+        store.next.value.original = original
+        store.next.value.correct_count = correct_count
+        store.next.value.incorrect_count = incorrect_count
+        store.next.value.memory_value = memory_value
+        store = store.next
+        memVal--
+      }
+
+      let list = List.head
+
+      let arr = []
+
+      while (list) {
+        arr.push(list.value)
+        list = list.next
+      }
+
+      LanguageService.insertNewLinkedList(req.app.get('db'), arr)
+      LanguageService.updateLanguageTotalScore(req.app.get('db'), language)
+
+      return res.json(response)
+    } catch (error) {
+      next(error)
     }
-    LanguageService.insertNewLinkedList(
-      req.app.get('db'),
-      List
-    )
-    List.head = null
   })
 
 module.exports = languageRouter

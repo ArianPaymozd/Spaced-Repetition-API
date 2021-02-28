@@ -82,7 +82,8 @@ class LinkedList {
             let currNode = this.head
             let prevNode = this.head
 
-            while (currNode.value !== item) {
+            while (currNode.value.id !== item) {
+                console.log(currNode.value.id, item)
                 if (currNode.next == null) {
                     console.log("item not found")
                     return
@@ -94,6 +95,49 @@ class LinkedList {
             prevNode.next = currNode.next
         }
     }
+
+    returnAt(place) {
+        if (!this.head) {
+            console.log("empty list") 
+            return
+        } else {
+            let currNode = this.head
+            let prevNode = this.head
+            let currPlace = 1
+
+            while (currPlace < place) {
+                if (currNode.next == null) {
+                    console.log("key not found")
+                    return
+                }
+                currPlace++
+                prevNode = currNode
+                currNode = currNode.next
+                
+            }
+            return (currNode.value.next)
+        }
+    }
+
+    display() {
+        let result = []
+        if (!this.head) {
+            console.log("empty list")
+            return
+        } else {
+            let currNode = this.head
+            while (currNode.next !== null) {
+                
+                result.push(currNode.value)
+                currNode = currNode.next
+            }
+            if (currNode.next == null) {
+                result.push(currNode.value)
+            }
+        }
+        return result
+    }
+    
 }
 
 module.exports = LinkedList
