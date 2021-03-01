@@ -53,13 +53,14 @@ languageRouter
       )
       const word = await LanguageService.getNextWord(
         req.app.get('db'),
-        req.language.id
+        req.language.head
       )
+      console.log(word)
       const response = {
-        nextWord: word.original,
+        nextWord: word[0].original,
         totalScore: parseInt(correctTotal[0].sum),
-        wordCorrectCount: word.correct_count,
-        wordIncorrectCount: word.incorrect_count,
+        wordCorrectCount: word[0].correct_count,
+        wordIncorrectCount: word[0].incorrect_count,
       }
       res.json(response).end()
       next()
@@ -136,6 +137,8 @@ languageRouter
         store = store.next
         memVal--
       }
+
+      language.head = List.head.value.id
 
       let list = List.head
 
