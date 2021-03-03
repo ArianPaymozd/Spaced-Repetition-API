@@ -38,15 +38,15 @@ class LinkedList {
             let prevNode = this.head
             let currPlace = 1
 
-            while (currPlace < place) {
+            while (currPlace !== place) {
                 if (currNode.next == null) {
                     console.log("key not found")
                     return
-                }
-                currPlace++
+                } else {
                 prevNode = currNode
                 currNode = currNode.next
-                
+                currPlace++
+                }
             }
             let newNode = new _Node(item, currNode.next)
             currNode.next = newNode
@@ -115,7 +115,7 @@ class LinkedList {
                 currNode = currNode.next
                 
             }
-            return (currNode.value.next)
+            return (currNode)
         }
     }
 

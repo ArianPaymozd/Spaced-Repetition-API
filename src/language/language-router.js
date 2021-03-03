@@ -55,7 +55,6 @@ languageRouter
         req.app.get('db'),
         req.language.head
       )
-      console.log(word)
       const response = {
         nextWord: word[0].original,
         totalScore: parseInt(correctTotal[0].sum),
@@ -100,42 +99,32 @@ languageRouter
         isCorrect: false,
       }
 
-      if (guess == List.head.value.translation) {
+      if (guess === List.head.value.translation) {
         language.total_score += 1
         response.totalScore += 1
         List.head.value.correct_count += 1
         List.head.value.memory_value *= 2
         response = { ...response, isCorrect: true }
+        let length = List.display().length
+        console.log(List.head.value.memory_value, length)
+        if (List.head.value.memory_value >= length) {
+          List.insertLast(List.head.value)
+        } else {
+          List.insertAt(List.head.value, List.head.value.memory_value + 1)
+        }
       } else {
         List.head.value.incorrect_count += 1
         List.head.value.memory_value = 1
         response = { ...response, isCorrect: false }
+        List.insertAt(List.head.value, 2)
       }
+      List.head = List.head.next
 
-      let memVal = List.head.value.memory_value
+      let head = List.head
 
-      store = List.head
-
-      while (store.next !== null && memVal > 0) {
-        let translation = store.value.translation
-        let original = store.value.original
-        let correct_count = store.value.correct_count
-        let incorrect_count = store.value.incorrect_count
-        let memory_value = store.value.memory_value
-
-        store.value.translation = store.next.value.translation
-        store.value.original = store.next.value.original
-        store.value.correct_count = store.next.value.correct_count
-        store.value.incorrect_count = store.next.value.incorrect_count
-        store.value.memory_value = store.next.value.memory_value
-
-        store.next.value.translation = translation
-        store.next.value.original = original
-        store.next.value.correct_count = correct_count
-        store.next.value.incorrect_count = incorrect_count
-        store.next.value.memory_value = memory_value
-        store = store.next
-        memVal--
+      while (head.next !== null) {
+        head.value.next = head.next.value.id
+        head = head.next
       }
 
       language.head = List.head.value.id
