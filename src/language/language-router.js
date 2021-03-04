@@ -106,7 +106,6 @@ languageRouter
         List.head.value.memory_value *= 2
         response = { ...response, isCorrect: true }
         let length = List.display().length
-        console.log(List.head.value.memory_value, length)
         if (List.head.value.memory_value >= length) {
           List.insertLast(List.head.value)
         } else {
